@@ -1,0 +1,41 @@
+name: 'netbsd vax action'
+description: 'action to run on netbsd on a simh vax'
+
+inputs:
+  path:
+    description: "Directory to copy sources to"
+    required: false
+    default: "/github"
+  run:
+    description: "your shell command block"
+    required: true
+
+outputs:
+  blank:
+    descrition: "not sure if i need this"
+
+runs:
+  using: 'composite'
+  steps:
+   - name: checkout
+     uses: actions/checkout@v3
+     with:
+       ref: ${{ github.head_ref }}
+
+   - name: install simh
+     shell: bash
+     run: |
+       sudo apt install -y expect curl rsync
+       git clone https://github.com/open-simh/simh.git
+       cd simh/
+       make vax
+
+   - name: download bsd image
+     shell: bash
+     run: |
+       curl -so ../ci.dsk.gz https://foo.dsk.gz
+
+   - name: run command block
+     shell: bash
+     run: |
+       sudo $GITHUB_ACTION_PATH/runvax.sh "${{ inputs.run }}" "${{ inputs.path }}"
